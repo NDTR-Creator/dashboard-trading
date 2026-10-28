@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Administration · Dashboard Trading</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body">
+
+<!-- ============================================
+     ÉCRAN DE CONNEXION
+     ============================================ -->
+<div id="login-screen" class="login-screen">
+  <div class="login-box">
+    <div class="login-header">
+      <h1>Administration</h1>
+      <p class="login-subtitle">Dashboard Trading XAU/USD</p>
+    </div>
+
+    <form id="login-form" class="login-form">
+      <div class="form-group">
+        <label for="email">Email administrateur</label>
+        <input type="email" id="email" name="email" required autocomplete="username">
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+
+      <div id="login-error" class="login-error"></div>
+
+      <button type="submit" class="btn-primary" id="btn-login">Se connecter</button>
+    </form>
+
+    <div class="login-footer">
+      <p>Accès réservé à l'administrateur du dashboard</p>
+      <a href="index.html" class="back-link">← Retour au dashboard public</a>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================
+     INTERFACE D'ADMINISTRATION
+     ============================================ -->
+<div id="admin-screen" class="admin-screen" style="display:none;">
+
+  <!-- Header admin -->
+  <header class="admin-header">
+    <div class="admin-header-content">
+      <div class="admin-brand">
+        <h1>Administration</h1>
+        <p class="admin-subtitle">Publication des briefs</p>
+      </div>
+      <div class="admin-user-info">
+        <span id="user-email" class="user-email"></span>
+        <a href="index.html" class="btn-secondary">Voir le dashboard</a>
+        <button id="btn-logout" class="btn-ghost">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Onglets principaux -->
+  <nav class="admin-tabs">
+    <button class="admin-tab-button active" data-admin-tab="daily">Brief Journalier</button>
+    <button class="admin-tab-button" data-admin-tab="weekly">Brief Hebdomadaire</button>
+    <button class="admin-tab-button" data-admin-tab="history">Historique</button>
+  </nav>
+
+  <!-- ============================================
+       ONGLET BRIEF JOURNALIER
+       ============================================ -->
+  <section class="admin-tab-content active" id="admin-tab-daily">
+    <div class="admin-container">
+
+      <div class="admin-section-header">
+        <h2>Nouveau brief journalier</h2>
+        <span class="admin-date-display" id="daily-date-display"></span>
+      </div>
+
+      <form id="form-brief-daily" class="brief-form">
+
+        <div class="form-group">
+          <label for="daily-title">Titre du brief</label>
+          <input type="text" id="daily-title" name="title" placeholder="Ex: Brief J-1 FOMC, veille calme en apparence" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="daily-gold">Prix Or (USD)</label>
+            <input type="text" id="daily-gold" name="gold_price" placeholder="4 185,63">
+          </div>
+          <div class="form-group">
+            <label for="daily-dxy">DXY</label>
+            <input type="text" id="daily-dxy" name="dxy" placeholder="102,407">
+          </div>
+          <div class="form-group">
+            <label for="daily-10y">10 ans US (%)</label>
+            <input type="text" id="daily-10y" name="us10y" placeholder="5,22">
+          </div>
+          <div class="form-group">
+            <label for="daily-fed-proba">Prob. Fed (%)</label>
+            <input type="text" id="daily-fed-proba" name="fed_proba" placeholder="17">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="daily-snapshot">Snapshot chiffré · lecture synthétique</label>
+          <textarea id="daily-snapshot" name="snapshot" rows="4" placeholder="Synthèse générale de l'état du marché..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="daily-fed">Volet Fed · décisions, membres, probabilités CME</label>
+          <textarea id="daily-fed" name="fed" rows="6" placeholder="État du débat FOMC, interventions des membres, probabilités de hausse/baisse..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="daily-macro">Volet Macro · publications et flux institutionnels</label>
+          <textarea id="daily-macro" name="macro" rows="6" placeholder="Publications économiques du jour et à venir, flux CFTC, ETF, cibles institutions..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="daily-geo">Volet Géopolitique · conflits, pétrole, tensions</label>
+          <textarea id="daily-geo" name="geopolitics" rows="5" placeholder="Iran-Hormuz, Ukraine, Taïwan, Chine, pétrole..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="daily-physical">Volet Demande physique · PBoC, Shanghai, ETF</label>
+          <textarea id="daily-physical" name="physical" rows="5" placeholder="Prime Shanghai, achats PBoC, importations Chine, flux ETF..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="daily-technical">Niveaux techniques observables · supply, demand, zones</label>
+          <textarea id="daily-technical" name="technical" rows="7" placeholder="Zones de supply au-dessus, demand en-dessous, pools de liquidité, FVG non mitigés, structure Weekly/Daily/H4..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="daily-scenarios">Scénarios probabilisés 48h</label>
+          <textarea id="daily-scenarios" name="scenarios" rows="6" placeholder="3 scénarios avec probabilités chiffrées et déclencheurs..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="daily-alerts">Alertes & règles opérationnelles</label>
+          <textarea id="daily-alerts" name="alerts" rows="4" placeholder="Catalyseurs programmés 48h, règles FLAT, fenêtres interdites..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="btn-save-daily-draft" class="btn-secondary">Sauvegarder brouillon</button>
+          <button type="submit" class="btn-primary">Publier le brief</button>
+        </div>
+
+        <div id="daily-feedback" class="form-feedback"></div>
+      </form>
+
+    </div>
+  </section>
+
+  <!-- ============================================
+       ONGLET BRIEF HEBDOMADAIRE
+       ============================================ -->
+  <section class="admin-tab-content" id="admin-tab-weekly" style="display:none;">
+    <div class="admin-container">
+
+      <div class="admin-section-header">
+        <h2>Nouveau brief hebdomadaire</h2>
+        <span class="admin-date-display" id="weekly-date-display"></span>
+      </div>
+
+      <form id="form-brief-weekly" class="brief-form">
+
+        <div class="form-group">
+          <label for="weekly-title">Titre du brief</label>
+          <input type="text" id="weekly-title" name="title" placeholder="Ex: Semaine FOMC + PCE, structure Weekly à surveiller" required>
+        </div>
+
+        <div class="form-group">
+          <label for="weekly-recap">Récap des publications macro de la semaine écoulée</label>
+          <textarea id="weekly-recap" name="recap" rows="6" placeholder="CPI, PCE, NFP, FOMC, ISM publiés cette semaine avec résultats actual vs forecast..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="weekly-positioning">Positionnement institutionnel actualisé</label>
+          <textarea id="weekly-positioning" name="positioning" rows="5" placeholder="CFTC, ETF, PBoC, cibles Goldman/Citi/BofA actualisées..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="weekly-structure">Structure Weekly et Daily consolidée</label>
+          <textarea id="weekly-structure" name="structure" rows="6" placeholder="Flux Weekly, zones majeures défendues/cassées, double plancher/sommet potentiel..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="weekly-catalysts">Catalyseurs programmés semaine à venir</label>
+          <textarea id="weekly-catalysts" name="catalysts" rows="6" placeholder="Liste détaillée des publications, discours Fed, événements géopolitiques prévus..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="weekly-scenarios">Scénarios probabilisés semaine</label>
+          <textarea id="weekly-scenarios" name="scenarios" rows="6" placeholder="3 branches de scénarios semaine avec probabilités et déclencheurs..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="weekly-zones">Zones techniques majeures à surveiller</label>
+          <textarea id="weekly-zones" name="zones" rows="6" placeholder="Supply/demand Weekly, pools de liquidité, FVG non mitigés, niveaux fibonacci..."></textarea>
+        </div>
+
+        <div class="form-actions">
+          <button type="button" id="btn-save-weekly-draft" class="btn-secondary">Sauvegarder brouillon</button>
+          <button type="submit" class="btn-primary">Publier le brief hebdo</button>
+        </div>
+
+        <div id="weekly-feedback" class="form-feedback"></div>
+      </form>
+
+    </div>
+  </section>
+
+  <!-- ============================================
+       ONGLET HISTORIQUE
+       ============================================ -->
+  <section class="admin-tab-content" id="admin-tab-history" style="display:none;">
+    <div class="admin-container">
+
+      <div class="admin-section-header">
+        <h2>Historique des briefs publiés</h2>
+        <div class="history-filter">
+          <button class="filter-button active" data-filter="all">Tous</button>
+          <button class="filter-button" data-filter="daily">Journaliers</button>
+          <button class="filter-button" data-filter="weekly">Hebdomadaires</button>
+        </div>
+      </div>
+
+      <div id="history-list" class="history-list">
+        <div class="history-loading">Chargement de l'historique...</div>
+      </div>
+
+    </div>
+  </section>
+
+</div>
+
+<!-- ============================================
+     MODAL DE CONFIRMATION SUPPRESSION
+     ============================================ -->
+<div id="confirm-modal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <h3>Confirmer la suppression</h3>
+    <p>Êtes-vous sûr de vouloir supprimer ce brief ? Cette action est irréversible.</p>
+    <div class="modal-actions">
+      <button id="btn-cancel-delete" class="btn-secondary">Annuler</button>
+      <button id="btn-confirm-delete" class="btn-danger">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="admin.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Trading XAU/USD — Ronan</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-content">
+    <div class="brand">
+      <h1>Dashboard XAU/USD</h1>
+      <p class="subtitle">Centre de commande trading</p>
+    </div>
+    <div class="header-right">
+      <div class="date-display">
+        <span id="current-date"></span>
+        <span id="current-time"></span>
+      </div>
+      <a href="admin.html" class="admin-access-btn" title="Administration">⚙️</a>
+    </div>
+  </div>
+</header>
+
+<section class="indicators-section">
+  <h2 class="indicators-title">Indicateurs macro clés</h2>
+  <div class="indicators-grid">
+
+    <div class="indicator-card">
+      <div class="indicator-label">VIX · Indice de volatilité</div>
+      <div class="indicator-widget-large">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {
+            "symbol": "CAPITALCOM:VIX",
+            "width": "100%",
+            "height": "100%",
+            "locale": "fr",
+            "dateRange": "1M",
+            "colorTheme": "light",
+            "isTransparent": true,
+            "autosize": false,
+            "largeChartUrl": "",
+            "chartOnly": false,
+            "noTimeScale": false
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <div class="indicator-card">
+      <div class="indicator-label">US 2Y · Rendement 2 ans</div>
+      <div class="indicator-widget-large">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {
+            "symbol": "FRED:DGS2",
+            "width": "100%",
+            "height": "100%",
+            "locale": "fr",
+            "dateRange": "1M",
+            "colorTheme": "light",
+            "isTransparent": true,
+            "autosize": false,
+            "largeChartUrl": "",
+            "chartOnly": false,
+            "noTimeScale": false
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+    <div class="indicator-card">
+      <div class="indicator-label">Brent · Pétrole brut</div>
+      <div class="indicator-widget-large">
+        <div class="tradingview-widget-container">
+          <div class="tradingview-widget-container__widget"></div>
+          <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+          {
+            "symbol": "TVC:UKOIL",
+            "width": "100%",
+            "height": "100%",
+            "locale": "fr",
+            "dateRange": "1M",
+            "colorTheme": "light",
+            "isTransparent": true,
+            "autosize": false,
+            "largeChartUrl": "",
+            "chartOnly": false,
+            "noTimeScale": false
+          }
+          </script>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<main class="main-grid">
+
+  <section class="charts-full-section">
+    <div class="chart-tabs">
+      <button class="chart-tab-button active" data-chart="gold">XAU/USD · Or H4</button>
+      <button class="chart-tab-button" data-chart="dxy">DXY · Dollar H4</button>
+    </div>
+
+    <div class="chart-tab-content active" id="chart-tab-gold">
+      <div class="chart-container-large">
+        <iframe
+          id="iframe-chart-gold"
+          src="https://s.tradingview.com/widgetembed/?symbol=OANDA%3AXAUUSD&interval=240&theme=light&style=1&locale=fr&timezone=Europe%2FParis&studies=%5B%22RSI%40tv-basicstudies%22%2C%22MASimple%40tv-basicstudies%22%5D&withdateranges=1&hide_side_toolbar=0"
+          width="100%"
+          height="620"
+          frameborder="0"
+          allowtransparency="true"
+          scrolling="no"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+
+    <div class="chart-tab-content" id="chart-tab-dxy" style="display:none;">
+      <div class="chart-container-large">
+        <iframe
+          id="iframe-chart-dxy"
+          src="https://s.tradingview.com/widgetembed/?symbol=TVC%3ADXY&interval=240&theme=light&style=1&locale=fr&timezone=Europe%2FParis&studies=%5B%22RSI%40tv-basicstudies%22%5D&withdateranges=1&hide_side_toolbar=0"
+          width="100%"
+          height="620"
+          frameborder="0"
+          allowtransparency="true"
+          scrolling="no"
+          allowfullscreen>
+        </iframe>
+      </div>
+    </div>
+  </section>
+
+  <section class="brief-section brief-daily">
+    <div class="brief-header">
+      <h2 class="section-title">Brief du jour</h2>
+      <span class="brief-date" id="brief-daily-date"></span>
+    </div>
+    <div class="brief-content">
+      <article class="brief-placeholder">
+        <h3>En attente du brief journalier</h3>
+        <p>Le brief du jour sera publié ici chaque matin. Il contient :</p>
+        <ul>
+          <li>Snapshot chiffré · prix or, DXY, 10 ans US, probabilités Fed</li>
+          <li>Volet Fed · décisions, discours, probabilités CME</li>
+          <li>Volet macro · publications économiques, flux institutionnels</li>
+          <li>Volet géopolitique · conflits actifs, pétrole, tensions</li>
+          <li>Volet demande physique · PBoC, Shanghai, ETF, CFTC</li>
+          <li>Niveaux techniques observables · supply, demand, zones de prix</li>
+          <li>Scénarios probabilisés 48h</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="brief-section brief-weekly">
+    <div class="brief-header">
+      <h2 class="section-title">Brief de la semaine</h2>
+      <span class="brief-date" id="brief-weekly-date"></span>
+    </div>
+    <div class="brief-content">
+      <article class="brief-placeholder">
+        <h3>En attente du brief hebdomadaire</h3>
+        <p>Le brief hebdo sera publié ici chaque dimanche soir. Il contient :</p>
+        <ul>
+          <li>Récap des publications macro de la semaine écoulée</li>
+          <li>Positionnement institutionnel actualisé</li>
+          <li>Structure Weekly et Daily consolidée</li>
+          <li>Catalyseurs programmés pour la semaine à venir</li>
+          <li>Scénarios probabilisés semaine</li>
+          <li>Zones techniques majeures à surveiller</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <section class="calendar-section">
+    <h2 class="section-title">Calendrier économique de la semaine</h2>
+    <div class="calendar-tabs">
+      <button class="tab-button active" data-tab="investing">Vue semaine détaillée</button>
+      <button class="tab-button" data-tab="tradingview">Vue compacte</button>
+    </div>
+
+    <div class="calendar-container tab-content active" id="tab-investing">
+      <iframe
+        src="https://sslecal2.investing.com?columns=exc_flags,exc_currency,exc_importance,exc_actual,exc_forecast,exc_previous&category=_employment,_economicActivity,_inflation,_credit,_centralBanks,_confidenceIndex,_balance,_Bonds&importance=2,3&features=datepicker,timezone,timeselector,filters&countries=5,37,14&calType=week&timeZone=58&lang=5"
+        width="100%"
+        height="650"
+        frameborder="0"
+        allowtransparency="true"
+        marginwidth="0"
+        marginheight="0">
+      </iframe>
+      <div class="calendar-attribution">
+        <span>Calendrier économique en temps réel fourni par</span>
+        <a href="https://fr.investing.com/" rel="nofollow" target="_blank">Investing.com France</a>
+      </div>
+    </div>
+
+    <div class="calendar-container tab-content" id="tab-tradingview" style="display:none;">
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+        {
+          "colorTheme": "light",
+          "isTransparent": true,
+          "locale": "fr",
+          "countryFilter": "us,cn,in",
+          "importanceFilter": "0,1",
+          "width": "100%",
+          "height": "650"
+        }
+        </script>
+      </div>
+    </div>
+  </section>
+
+  <section class="news-section news-gold">
+    <div class="news-header">
+      <h2 class="section-title">Actualités Or · Investing.com</h2>
+      <button class="news-refresh" id="refresh-gold-news" title="Rafraîchir">↻</button>
+    </div>
+    <div class="news-container">
+      <div class="news-list" id="gold-news-list">
+        <div class="news-loading">Chargement des articles Investing en cours...</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="news-section news-dollar">
+    <div class="news-header">
+      <h2 class="section-title">Actualités Dollar · Investing.com</h2>
+      <button class="news-refresh" id="refresh-dollar-news" title="Rafraîchir">↻</button>
+    </div>
+    <div class="news-container">
+      <div class="news-list" id="dollar-news-list">
+        <div class="news-loading">Chargement des articles Investing en cours...</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-content-wide">
+
+    <div class="footer-section-full">
+      <h3>Indicateurs économiques · accès direct aux sources officielles</h3>
+      <div class="indicators-links-grid">
+
+        <a href="https://www.bls.gov/cpi/" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">CPI · Inflation US</div>
+          <div class="indicator-link-source">Bureau of Labor Statistics</div>
+        </a>
+
+        <a href="https://www.bea.gov/data/personal-consumption-expenditures-price-index" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">PCE · Inflation Fed préférée</div>
+          <div class="indicator-link-source">Bureau of Economic Analysis</div>
+        </a>
+
+        <a href="https://www.bls.gov/ppi/" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">PPI · Prix à la production</div>
+          <div class="indicator-link-source">Bureau of Labor Statistics</div>
+        </a>
+
+        <a href="https://www.bls.gov/ces/" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">NFP · Emploi non agricole</div>
+          <div class="indicator-link-source">Bureau of Labor Statistics</div>
+        </a>
+
+        <a href="https://www.bls.gov/web/empsit/cesbmart.htm" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Taux de chômage US</div>
+          <div class="indicator-link-source">Bureau of Labor Statistics</div>
+        </a>
+
+        <a href="https://www.ismworld.org/supply-management-news-and-reports/reports/ism-report-on-business/" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">ISM · Manufacturing & Services</div>
+          <div class="indicator-link-source">Institute for Supply Management</div>
+        </a>
+
+        <a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">FOMC · Calendrier Fed</div>
+          <div class="indicator-link-source">Federal Reserve</div>
+        </a>
+
+        <a href="https://www.cmegroup.com/markets/interest-rates/cme-fedwatch-tool.html" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">FedWatch · Probabilités taux</div>
+          <div class="indicator-link-source">CME Group</div>
+        </a>
+
+        <a href="https://fred.stlouisfed.org/series/DGS10" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Rendement 10 ans US</div>
+          <div class="indicator-link-source">Federal Reserve FRED</div>
+        </a>
+
+        <a href="https://www.bea.gov/data/gdp/gross-domestic-product" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">PIB US · Croissance</div>
+          <div class="indicator-link-source">Bureau of Economic Analysis</div>
+        </a>
+
+        <a href="https://www.census.gov/retail/index.html" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Retail Sales · Consommation</div>
+          <div class="indicator-link-source">US Census Bureau</div>
+        </a>
+
+        <a href="https://www.conference-board.org/topics/consumer-confidence" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Consumer Confidence</div>
+          <div class="indicator-link-source">Conference Board</div>
+        </a>
+
+        <a href="https://www.gold.org/goldhub/data/gold-demand-by-country" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Demande d'or · consommation</div>
+          <div class="indicator-link-source">World Gold Council</div>
+        </a>
+
+        <a href="https://www.gold.org/goldhub/data/monthly-central-bank-statistics" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Achats or · Banques centrales</div>
+          <div class="indicator-link-source">World Gold Council</div>
+        </a>
+
+        <a href="https://www.gold.org/goldhub/data/gold-etfs-holdings-and-flows" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Flux ETF or · entrées/sorties</div>
+          <div class="indicator-link-source">World Gold Council</div>
+        </a>
+
+        <a href="https://www.safe.gov.cn/en/2018/0928/1393.html" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">PBoC · Réserves or Chine</div>
+          <div class="indicator-link-source">SAFE · Chine</div>
+        </a>
+
+        <a href="https://www.cftc.gov/MarketReports/CommitmentsofTraders/index.htm" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">COT · Positions institutionnels</div>
+          <div class="indicator-link-source">CFTC</div>
+        </a>
+
+        <a href="https://www.en.sge.com.cn/" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Prime Shanghai · demande physique</div>
+          <div class="indicator-link-source">Shanghai Gold Exchange</div>
+        </a>
+
+        <a href="https://www.eia.gov/petroleum/weekly/" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Stocks pétrole · WTI</div>
+          <div class="indicator-link-source">EIA · US Energy Info</div>
+        </a>
+
+        <a href="https://www.opec.org/opec_web/en/publications/202.htm" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">OPEC · Production pétrole</div>
+          <div class="indicator-link-source">OPEC Monthly Report</div>
+        </a>
+
+        <a href="https://www.ecb.europa.eu/press/pr/html/index.en.html" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">BCE · Décisions zone euro</div>
+          <div class="indicator-link-source">Banque Centrale Européenne</div>
+        </a>
+
+        <a href="https://data.stats.gov.cn/english/" target="_blank" rel="noopener" class="indicator-link-card">
+          <div class="indicator-link-title">Statistiques Chine</div>
+          <div class="indicator-link-source">National Bureau of Statistics China</div>
+        </a>
+
+      </div>
+    </div>
+
+    <div class="footer-copyright">
+      <p>Dashboard personnel · usage trading XAU/USD · v2.0</p>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+<script type="module" src="briefs.js"></script>
+
+</body>
+</html>
