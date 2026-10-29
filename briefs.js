@@ -202,17 +202,32 @@ function renderWeeklyBrief(container, brief, isCurrentWeek, monday, sunday) {
 
       <div class="brief-published-subtitle">Publié le ${dateStr}</div>
 
-      ${brief.recap ? renderBriefSection('Récap publications macro', brief.recap, '📊') : ''}
-      ${brief.positioning ? renderBriefSection('Positionnement institutionnel', brief.positioning, '💼') : ''}
-      ${brief.structure ? renderBriefSection('Structure Weekly et Daily', brief.structure, '📈') : ''}
-      ${brief.catalysts ? renderBriefSection('Catalyseurs semaine à venir', brief.catalysts, '🔥') : ''}
-      ${brief.scenarios ? renderBriefSection('Scénarios probabilisés semaine', brief.scenarios, '🎲') : ''}
-      ${brief.zones ? renderBriefSection('Zones techniques majeures', brief.zones, '📐') : ''}
+      ${brief.bloc1 ? renderBriefSection('Macro & Tendances', brief.bloc1, '1️⃣') : ''}
+      ${brief.bloc2 ? renderBriefSection('Géopolitique & Catalyseurs', brief.bloc2, '2️⃣') : ''}
+      ${brief.bloc3 ? renderBriefSection('Pilotage XAU/USD semaine', brief.bloc3, '3️⃣') : ''}
+
+      ${renderLegacyWeeklyBriefSections(brief)}
 
     </article>
   `;
 
   container.innerHTML = html;
+}
+
+// Rétrocompatibilité ancien format brief hebdo (6 rubriques)
+function renderLegacyWeeklyBriefSections(brief) {
+  if (brief.bloc1 || brief.bloc2 || brief.bloc3) {
+    return '';
+  }
+
+  let html = '';
+  if (brief.recap) html += renderBriefSection('Récap publications macro', brief.recap, '📊');
+  if (brief.positioning) html += renderBriefSection('Positionnement institutionnel', brief.positioning, '💼');
+  if (brief.structure) html += renderBriefSection('Structure Weekly et Daily', brief.structure, '📈');
+  if (brief.catalysts) html += renderBriefSection('Catalyseurs semaine à venir', brief.catalysts, '🔥');
+  if (brief.scenarios) html += renderBriefSection('Scénarios probabilisés semaine', brief.scenarios, '🎲');
+  if (brief.zones) html += renderBriefSection('Zones techniques majeures', brief.zones, '📐');
+  return html;
 }
 
 // ============================================
