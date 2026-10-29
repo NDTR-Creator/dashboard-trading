@@ -106,15 +106,25 @@ const DOLLAR_KEYWORDS = [
   'cpi', 'pce', 'inflation', 'nfp', 'payrolls', 'jobs'
 ];
 
-// Flux RSS Investing.com (séparés : thématiques affichés tels quels, généraux filtrés)
+// Flux RSS multi-sources (Kitco, FXStreet, ForexLive) — Investing bloque via Cloudflare
+// thematic = affichés tels quels, general = filtrés par mots-clés
 const INVESTING_FEEDS = {
   gold: {
-    thematic: ['https://www.investing.com/rss/commodities_Metals.rss'],
-    general: ['https://www.investing.com/rss/news_11.rss']
+    thematic: [
+      'https://www.kitco.com/rss/kitconews.xml',
+      'https://www.kitco.com/rss/KitcoNews-ContributedCommentaries.xml'
+    ],
+    general: [
+      'https://www.fxstreet.com/rss/news'
+    ]
   },
   dollar: {
-    thematic: ['https://www.investing.com/rss/forex_Majors.rss'],
-    general: ['https://www.investing.com/rss/news_14.rss']
+    thematic: [
+      'https://www.forexlive.com/feed/news'
+    ],
+    general: [
+      'https://www.fxstreet.com/rss/news'
+    ]
   }
 };
 
@@ -227,7 +237,7 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
     const topArticles = filteredArticles.slice(0, 15);
 
     if (topArticles.length === 0) {
-      container.innerHTML = '<div class="news-error">Aucun article Investing trouvé avec les mots-clés sélectionnés. Essayez de rafraîchir dans quelques minutes.</div>';
+      container.innerHTML = '<div class="news-error">Aucun article disponible pour le moment. Clique sur ↻ pour réessayer.</div>';
       return;
     }
 
@@ -260,11 +270,22 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'");
 
+      // Détection de la source depuis l'URL de l'article
+      let source = 'News';
+      try {
+        const host = new URL(article.link).hostname.replace('www.', '');
+        if (host.includes('kitco')) source = 'Kitco';
+        else if (host.includes('fxstreet')) source = 'FXStreet';
+        else if (host.includes('forexlive')) source = 'ForexLive';
+        else if (host.includes('investing')) source = 'Investing';
+        else source = host.split('.')[0].charAt(0).toUpperCase() + host.split('.')[0].slice(1);
+      } catch (e) {}
+
       return `
         <a href="${article.link}" class="news-item" target="_blank" rel="noopener">
           <div class="news-item-title">${cleanTitle}</div>
           <div class="news-item-meta">
-            <span class="news-item-source">Investing.com</span>
+            <span class="news-item-source">${source}</span>
             <span class="news-item-date">${dateStr}</span>
           </div>
           <span class="news-item-arrow">→</span>
@@ -276,7 +297,7 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
 
   } catch (error) {
     console.error('Erreur chargement actualités', error);
-    container.innerHTML = '<div class="news-error">Impossible de charger les articles Investing. Le service de proxy RSS est momentanément indisponible. Clique sur ↻ pour réessayer.</div>';
+    container.innerHTML = '<div class="news-error">Impossible de charger les articles. Le service de proxy RSS est momentanément indisponible. Clique sur ↻ pour réessayer.</div>';
   }
 }
 
