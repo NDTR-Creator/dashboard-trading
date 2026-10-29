@@ -185,13 +185,14 @@ const NEWS_FEEDS = {
   }
 };
 
-// Fetch via le Worker Cloudflare avec timeout de 20 secondes
+// Fetch via le Worker Cloudflare avec traduction serveur-side activée
+// Timeout 30 sec car le Worker fait la traduction en plus
 async function fetchViaProxy(url) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const timeoutId = setTimeout(() => controller.abort(), 30000);
 
   try {
-    const response = await fetch(RSS_PROXY + encodeURIComponent(url), {
+    const response = await fetch(RSS_PROXY + encodeURIComponent(url) + '&translate=1', {
       signal: controller.signal
     });
 
@@ -277,19 +278,14 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
       return;
     }
 
-    // Traduction des titres en parallèle (avec cache)
-    const translatedArticles = await Promise.all(topArticles.map(async article => {
-      const cleanOriginal = (article.title || '')
+    // Pas de traduction client-side : le Worker Cloudflare le fait déjà
+    const html = topArticles.map(article => {
+      const cleanTitle = (article.title || '')
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'");
-      const translated = await translateTitle(cleanOriginal);
-      return { ...article, cleanTitle: translated, originalTitle: cleanOriginal };
-    }));
-
-    const html = translatedArticles.map(article => {
       const date = new Date(article.pubDate);
       const now = new Date();
       const diffMinutes = Math.floor((now - date) / 60000);
@@ -325,10 +321,9 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
         else source = host.split('.')[0].charAt(0).toUpperCase() + host.split('.')[0].slice(1);
       } catch (e) {}
 
-      // Titre original en attribut pour que l'utilisateur puisse hover et voir l'original
       return `
-        <a href="${article.link}" class="news-item" target="_blank" rel="noopener" title="Original: ${article.originalTitle.replace(/"/g, '&quot;')}">
-          <div class="news-item-title">${article.cleanTitle}</div>
+        <a href="${article.link}" class="news-item" target="_blank" rel="noopener">
+          <div class="news-item-title">${cleanTitle}</div>
           <div class="news-item-meta">
             <span class="news-item-source">${source}</span>
             <span class="news-item-date">${dateStr}</span>
