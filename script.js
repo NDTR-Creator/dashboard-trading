@@ -93,22 +93,21 @@ function updateBriefDates() {
 
 const RSS_PROXY = 'https://rss-proxy.crecyronan08.workers.dev/?url=';
 
-// Mots-clés pour filtrage des flux généraux
-const GOLD_KEYWORDS = [
-  'gold', 'xau', 'bullion', 'ounce', 'oz',
-  'precious metals', 'metals', 'silver', 'platinum', 'palladium',
-  'mining', 'commodity', 'commodities',
-  'métaux précieux', 'lingot', 'cours de l\'or', 'l\'or'
-];
+// Mots-clés pour filtrage (appliqués à TOUS les flux)
+const GOLD_KEYWORDS = ['xauusd', 'gold', 'or', 'fed'];
+const DOLLAR_KEYWORDS = ['dollar', 'dxy', 'fed', 'us'];
 
-const DOLLAR_KEYWORDS = [
-  'dollar', 'dxy', 'usd', 'greenback', 'billet vert',
-  'fed', 'fomc', 'powell', 'warsh', 'yellen', 'federal reserve',
-  'treasury', 'treasuries', 'yield', 'yields', 'bond', 'bonds',
-  'rate', 'rates', 'hike', 'cut', 'basis points',
-  'cpi', 'pce', 'inflation', 'nfp', 'payrolls', 'jobs',
-  'euro', 'eur/usd', 'gbp/usd', 'usd/jpy', 'forex'
-];
+// Match un mot-clé dans le contenu
+// Pour les mots courts (≤ 3 lettres) : word boundary pour éviter les faux positifs
+// Pour les autres : includes classique
+function matchKeyword(content, keyword) {
+  const k = keyword.toLowerCase();
+  if (k.length <= 3) {
+    const regex = new RegExp(`\\b${k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+    return regex.test(content);
+  }
+  return content.includes(k);
+}
 
 // Sources RSS - thematic affichées directement, general filtrées par mots-clés
 const NEWS_FEEDS = {
@@ -183,6 +182,7 @@ function parseRssXml(xmlText) {
 }
 
 // Récupère les articles d'un ensemble de flux
+// Filtrage mots-clés appliqué à TOUS les flux (thematic + general)
 async function fetchFilteredNews(feeds, keywords, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
@@ -190,36 +190,23 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
   container.innerHTML = '<div class="news-loading">Chargement des articles en cours...</div>';
 
   try {
-    let thematicArticles = [];
-    let generalArticles = [];
+    let allArticles = [];
 
-    // Flux thématiques : tous les articles
-    for (const feedUrl of feeds.thematic || []) {
-      try {
-        const xmlText = await fetchViaProxy(feedUrl);
-        const items = parseRssXml(xmlText);
-        thematicArticles = thematicArticles.concat(items);
-      } catch (err) {
-        console.warn('Flux thématique indisponible: ' + feedUrl, err.message);
-      }
-    }
+    const allFeedUrls = [...(feeds.thematic || []), ...(feeds.general || [])];
 
-    // Flux généraux : filtrés par mots-clés
-    for (const feedUrl of feeds.general || []) {
+    for (const feedUrl of allFeedUrls) {
       try {
         const xmlText = await fetchViaProxy(feedUrl);
         const items = parseRssXml(xmlText);
         const filtered = items.filter(article => {
           const content = (article.title + ' ' + (article.description || '')).toLowerCase();
-          return keywords.some(k => content.includes(k.toLowerCase()));
+          return keywords.some(k => matchKeyword(content, k));
         });
-        generalArticles = generalArticles.concat(filtered);
+        allArticles = allArticles.concat(filtered);
       } catch (err) {
-        console.warn('Flux général indisponible: ' + feedUrl, err.message);
+        console.warn('Flux indisponible: ' + feedUrl, err.message);
       }
     }
-
-    const allArticles = thematicArticles.concat(generalArticles);
 
     // Déduplication par titre
     const seenTitles = new Set();
