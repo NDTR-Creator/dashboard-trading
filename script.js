@@ -87,8 +87,247 @@ function updateBriefDates() {
 }
 
 // ============================================
-// (Section actualités supprimée - remplacée par widgets TradingView Timeline)
+// ACTUALITÉS RSS via Cloudflare Worker (proxy perso)
+// Worker : https://rss-proxy.crecyronan08.workers.dev
 // ============================================
+
+const RSS_PROXY = 'https://rss-proxy.crecyronan08.workers.dev/?url=';
+
+// Mots-clés pour filtrage des flux généraux
+const GOLD_KEYWORDS = [
+  'gold', 'xau', 'bullion', 'ounce', 'oz',
+  'precious metals', 'metals', 'silver', 'platinum', 'palladium',
+  'mining', 'commodity', 'commodities',
+  'métaux précieux', 'lingot', 'cours de l\'or', 'l\'or'
+];
+
+const DOLLAR_KEYWORDS = [
+  'dollar', 'dxy', 'usd', 'greenback', 'billet vert',
+  'fed', 'fomc', 'powell', 'warsh', 'yellen', 'federal reserve',
+  'treasury', 'treasuries', 'yield', 'yields', 'bond', 'bonds',
+  'rate', 'rates', 'hike', 'cut', 'basis points',
+  'cpi', 'pce', 'inflation', 'nfp', 'payrolls', 'jobs',
+  'euro', 'eur/usd', 'gbp/usd', 'usd/jpy', 'forex'
+];
+
+// Sources RSS - thematic affichées directement, general filtrées par mots-clés
+const NEWS_FEEDS = {
+  gold: {
+    thematic: [
+      'https://www.investing.com/rss/commodities_Metals.rss',
+      'https://www.kitco.com/rss/kitconews.xml',
+      'https://www.kitco.com/rss/KitcoNews-ContributedCommentaries.xml',
+      'https://www.mining.com/feed/'
+    ],
+    general: [
+      'https://www.fxstreet.com/rss/news',
+      'https://www.forexlive.com/feed'
+    ]
+  },
+  dollar: {
+    thematic: [
+      'https://www.investing.com/rss/forex_Majors.rss',
+      'https://www.forexlive.com/feed'
+    ],
+    general: [
+      'https://www.fxstreet.com/rss/news',
+      'https://www.investing.com/rss/economicIndicators.rss'
+    ]
+  }
+};
+
+// Fetch via le Worker Cloudflare avec timeout de 20 secondes
+async function fetchViaProxy(url) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+  try {
+    const response = await fetch(RSS_PROXY + encodeURIComponent(url), {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      throw new Error('HTTP ' + response.status);
+    }
+
+    const text = await response.text();
+    if (!text || text.length < 100) {
+      throw new Error('Réponse vide ou trop courte');
+    }
+
+    return text;
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+// Parse le XML RSS en liste d'articles
+function parseRssXml(xmlText) {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlText, 'application/xml');
+
+  if (xml.querySelector('parsererror')) {
+    return [];
+  }
+
+  const items = xml.querySelectorAll('item');
+  return Array.from(items).map(item => ({
+    title: item.querySelector('title')?.textContent?.trim() || '',
+    link: item.querySelector('link')?.textContent?.trim() || '',
+    description: item.querySelector('description')?.textContent?.trim() || '',
+    pubDate: item.querySelector('pubDate')?.textContent?.trim() || ''
+  }));
+}
+
+// Récupère les articles d'un ensemble de flux
+async function fetchFilteredNews(feeds, keywords, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  container.innerHTML = '<div class="news-loading">Chargement des articles en cours...</div>';
+
+  try {
+    let thematicArticles = [];
+    let generalArticles = [];
+
+    // Flux thématiques : tous les articles
+    for (const feedUrl of feeds.thematic || []) {
+      try {
+        const xmlText = await fetchViaProxy(feedUrl);
+        const items = parseRssXml(xmlText);
+        thematicArticles = thematicArticles.concat(items);
+      } catch (err) {
+        console.warn('Flux thématique indisponible: ' + feedUrl, err.message);
+      }
+    }
+
+    // Flux généraux : filtrés par mots-clés
+    for (const feedUrl of feeds.general || []) {
+      try {
+        const xmlText = await fetchViaProxy(feedUrl);
+        const items = parseRssXml(xmlText);
+        const filtered = items.filter(article => {
+          const content = (article.title + ' ' + (article.description || '')).toLowerCase();
+          return keywords.some(k => content.includes(k.toLowerCase()));
+        });
+        generalArticles = generalArticles.concat(filtered);
+      } catch (err) {
+        console.warn('Flux général indisponible: ' + feedUrl, err.message);
+      }
+    }
+
+    const allArticles = thematicArticles.concat(generalArticles);
+
+    // Déduplication par titre
+    const seenTitles = new Set();
+    const uniqueArticles = allArticles.filter(article => {
+      if (!article.title || seenTitles.has(article.title)) return false;
+      seenTitles.add(article.title);
+      return true;
+    });
+
+    // Tri par date descendante
+    uniqueArticles.sort((a, b) => new Date(b.pubDate) - new Date(a.pubDate));
+
+    // Garder les 20 plus récents
+    const topArticles = uniqueArticles.slice(0, 20);
+
+    if (topArticles.length === 0) {
+      container.innerHTML = '<div class="news-error">Aucun article disponible pour le moment. Clique sur ↻ pour réessayer.</div>';
+      return;
+    }
+
+    const html = topArticles.map(article => {
+      const date = new Date(article.pubDate);
+      const now = new Date();
+      const diffMinutes = Math.floor((now - date) / 60000);
+
+      let dateStr;
+      if (isNaN(diffMinutes) || diffMinutes < 0) {
+        dateStr = 'Récent';
+      } else if (diffMinutes < 60) {
+        dateStr = `Il y a ${diffMinutes} min`;
+      } else if (diffMinutes < 1440) {
+        dateStr = `Il y a ${Math.floor(diffMinutes / 60)}h`;
+      } else {
+        dateStr = date.toLocaleString('fr-FR', {
+          day: '2-digit',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Europe/Paris'
+        });
+      }
+
+      // Nettoyage du titre
+      const cleanTitle = article.title
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+
+      // Détection de la source depuis l'URL
+      let source = 'News';
+      try {
+        const host = new URL(article.link).hostname.replace('www.', '');
+        if (host.includes('investing')) source = 'Investing';
+        else if (host.includes('kitco')) source = 'Kitco';
+        else if (host.includes('fxstreet')) source = 'FXStreet';
+        else if (host.includes('forexlive')) source = 'ForexLive';
+        else if (host.includes('mining')) source = 'Mining.com';
+        else source = host.split('.')[0].charAt(0).toUpperCase() + host.split('.')[0].slice(1);
+      } catch (e) {}
+
+      return `
+        <a href="${article.link}" class="news-item" target="_blank" rel="noopener">
+          <div class="news-item-title">${cleanTitle}</div>
+          <div class="news-item-meta">
+            <span class="news-item-source">${source}</span>
+            <span class="news-item-date">${dateStr}</span>
+          </div>
+          <span class="news-item-arrow">→</span>
+        </a>
+      `;
+    }).join('');
+
+    container.innerHTML = html;
+
+  } catch (error) {
+    console.error('Erreur chargement actualités', error);
+    container.innerHTML = '<div class="news-error">Impossible de charger les articles. Clique sur ↻ pour réessayer.</div>';
+  }
+}
+
+// Initialisation des actualités
+function initNews() {
+  fetchFilteredNews(NEWS_FEEDS.gold, GOLD_KEYWORDS, 'gold-news-list');
+  fetchFilteredNews(NEWS_FEEDS.dollar, DOLLAR_KEYWORDS, 'dollar-news-list');
+
+  const refreshGold = document.getElementById('refresh-gold-news');
+  const refreshDollar = document.getElementById('refresh-dollar-news');
+
+  if (refreshGold) {
+    refreshGold.addEventListener('click', () => {
+      fetchFilteredNews(NEWS_FEEDS.gold, GOLD_KEYWORDS, 'gold-news-list');
+    });
+  }
+
+  if (refreshDollar) {
+    refreshDollar.addEventListener('click', () => {
+      fetchFilteredNews(NEWS_FEEDS.dollar, DOLLAR_KEYWORDS, 'dollar-news-list');
+    });
+  }
+
+  // Rafraîchissement automatique toutes les 30 minutes
+  setInterval(() => {
+    fetchFilteredNews(NEWS_FEEDS.gold, GOLD_KEYWORDS, 'gold-news-list');
+    fetchFilteredNews(NEWS_FEEDS.dollar, DOLLAR_KEYWORDS, 'dollar-news-list');
+  }, 30 * 60 * 1000);
+}
 
 // Gestion des onglets du calendrier
 function initCalendarTabs() {
@@ -150,6 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
   updateBriefDates();
   initCalendarTabs();
   initChartTabs();
+  initNews();
 
   // Mise à jour toutes les secondes
   setInterval(updateDateTime, 1000);
@@ -157,5 +397,5 @@ document.addEventListener('DOMContentLoaded', function() {
   // Mise à jour des dates des briefs toutes les minutes
   setInterval(updateBriefDates, 60000);
 
-  console.log('Dashboard XAU/USD chargé · v2.1 widgets TradingView Timeline');
+  console.log('Dashboard XAU/USD chargé · v2.2 RSS via Cloudflare Worker');
 });
