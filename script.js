@@ -129,10 +129,12 @@ const INVESTING_FEEDS = {
 };
 
 // Proxies CORS avec fallback automatique (si un tombe, on passe au suivant)
+// corsproxy.io passé en payant (HTTP 401), remplacé par thingproxy
 const RSS_PROXIES = [
   'https://api.allorigins.win/raw?url=',
-  'https://corsproxy.io/?url=',
-  'https://api.codetabs.com/v1/proxy?quest='
+  'https://thingproxy.freeboard.io/fetch/',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://cors.lol/?url='
 ];
 
 // Essaie chaque proxy jusqu'à obtenir une réponse valide
@@ -140,9 +142,15 @@ async function fetchViaProxy(url) {
   for (const proxy of RSS_PROXIES) {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      // Timeout 15 secondes (allorigins et autres parfois lents)
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch(proxy + encodeURIComponent(url), {
+      // thingproxy n'encode pas l'URL, les autres si
+      const proxyUrl = proxy.includes('thingproxy')
+        ? proxy + url
+        : proxy + encodeURIComponent(url);
+
+      const response = await fetch(proxyUrl, {
         signal: controller.signal
       });
 
@@ -150,7 +158,7 @@ async function fetchViaProxy(url) {
 
       if (response.ok) {
         const text = await response.text();
-        if (text && text.length > 100) {
+        if (text && text.length > 100 && !text.includes('<!DOCTYPE html>')) {
           return text;
         }
       }
@@ -186,7 +194,7 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
-  container.innerHTML = '<div class="news-loading">Chargement des articles Investing en cours...</div>';
+  container.innerHTML = '<div class="news-loading">Chargement des articles en cours...</div>';
 
   try {
     let thematicArticles = [];
