@@ -106,8 +106,56 @@ const INVESTING_FEEDS = {
   ]
 };
 
-// Proxy CORS pour récupérer les RSS
-const RSS_PROXY = 'https://api.rss2json.com/v1/api.json?rss_url=';
+// Proxies CORS avec fallback automatique (si un tombe, on passe au suivant)
+const RSS_PROXIES = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?url=',
+  'https://api.codetabs.com/v1/proxy?quest='
+];
+
+// Essaie chaque proxy jusqu'à obtenir une réponse valide
+async function fetchViaProxy(url) {
+  for (const proxy of RSS_PROXIES) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(proxy + encodeURIComponent(url), {
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const text = await response.text();
+        if (text && text.length > 100) {
+          return text;
+        }
+      }
+    } catch (err) {
+      console.warn(`Proxy ${proxy} indisponible:`, err.message);
+    }
+  }
+  throw new Error('Tous les proxys CORS sont indisponibles');
+}
+
+// Parse le XML RSS brut en liste d'articles
+function parseRssXml(xmlText) {
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlText, 'application/xml');
+
+  if (xml.querySelector('parsererror')) {
+    return [];
+  }
+
+  const items = xml.querySelectorAll('item');
+  return Array.from(items).map(item => ({
+    title: item.querySelector('title')?.textContent?.trim() || '',
+    link: item.querySelector('link')?.textContent?.trim() || '',
+    description: item.querySelector('description')?.textContent?.trim() || '',
+    pubDate: item.querySelector('pubDate')?.textContent?.trim() || ''
+  }));
+}
 
 // Fonction de récupération et filtrage des articles
 async function fetchFilteredNews(feedUrls, keywords, containerId) {
@@ -121,12 +169,10 @@ async function fetchFilteredNews(feedUrls, keywords, containerId) {
 
     for (const feedUrl of feedUrls) {
       try {
-        const response = await fetch(RSS_PROXY + encodeURIComponent(feedUrl));
-        if (!response.ok) continue;
-
-        const data = await response.json();
-        if (data.items && Array.isArray(data.items)) {
-          allArticles = allArticles.concat(data.items);
+        const xmlText = await fetchViaProxy(feedUrl);
+        const parsedItems = parseRssXml(xmlText);
+        if (parsedItems.length > 0) {
+          allArticles = allArticles.concat(parsedItems);
         }
       } catch (feedError) {
         console.warn('Erreur sur le flux ' + feedUrl, feedError);
