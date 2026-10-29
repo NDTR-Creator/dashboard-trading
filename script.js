@@ -136,7 +136,7 @@ function isLikelyFrench(text) {
   return frenchHints.test(text);
 }
 
-// Traduit un titre EN → FR via Google Translate (via le Worker proxy)
+// Traduit un titre EN → FR via MyMemory API (CORS activé, pas de clé, gratuit)
 async function translateTitle(text) {
   if (!text || text.length < 3) return text;
   if (isLikelyFrench(text)) return text;
@@ -145,16 +145,22 @@ async function translateTitle(text) {
   if (cache[text]) return cache[text];
 
   try {
-    const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=${encodeURIComponent(text)}`;
-    const response = await fetch(RSS_PROXY + encodeURIComponent(translateUrl));
+    // MyMemory API : CORS activé nativement, 10k chars/jour gratuits
+    // Ajout d'un email bidon augmente la limite à 50k chars/jour
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|fr&de=ronan.francois8@gmail.com`;
+    const response = await fetch(url);
     if (!response.ok) return text;
 
     const data = await response.json();
-    const translated = data[0]?.map(seg => seg[0])?.join('').trim() || text;
+    const translated = data?.responseData?.translatedText?.trim();
 
-    cache[text] = translated;
-    saveTranslationCache(cache);
-    return translated;
+    // Vérification que la traduction est valide (différente de l'original, pas une erreur)
+    if (translated && translated.length > 0 && translated.toLowerCase() !== text.toLowerCase() && !translated.includes('MYMEMORY WARNING')) {
+      cache[text] = translated;
+      saveTranslationCache(cache);
+      return translated;
+    }
+    return text;
   } catch (err) {
     console.warn('Erreur traduction:', err.message);
     return text;
@@ -185,14 +191,13 @@ const NEWS_FEEDS = {
   }
 };
 
-// Fetch via le Worker Cloudflare avec traduction serveur-side activée
-// Timeout 30 sec car le Worker fait la traduction en plus
+// Fetch via le Worker Cloudflare (sans traduction serveur - trop fragile)
 async function fetchViaProxy(url) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000);
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
 
   try {
-    const response = await fetch(RSS_PROXY + encodeURIComponent(url) + '&translate=1', {
+    const response = await fetch(RSS_PROXY + encodeURIComponent(url), {
       signal: controller.signal
     });
 
@@ -278,14 +283,20 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
       return;
     }
 
-    // Pas de traduction client-side : le Worker Cloudflare le fait déjà
-    const html = topArticles.map(article => {
-      const cleanTitle = (article.title || '')
+    // Traduction côté client via MyMemory (avec cache localStorage)
+    const translatedArticles = await Promise.all(topArticles.map(async article => {
+      const cleanOriginal = (article.title || '')
         .replace(/&amp;/g, '&')
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>')
         .replace(/&quot;/g, '"')
         .replace(/&#39;/g, "'");
+      const translated = await translateTitle(cleanOriginal);
+      return { ...article, cleanTitle: translated };
+    }));
+
+    const html = translatedArticles.map(article => {
+      const cleanTitle = article.cleanTitle;
       const date = new Date(article.pubDate);
       const now = new Date();
       const diffMinutes = Math.floor((now - date) / 60000);
