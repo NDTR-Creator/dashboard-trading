@@ -199,7 +199,7 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
         const xmlText = await fetchViaProxy(feedUrl);
         const items = parseRssXml(xmlText);
         const filtered = items.filter(article => {
-          const content = (article.title + ' ' + (article.description || '')).toLowerCase();
+          const content = (article.title || '').toLowerCase();
           return keywords.some(k => matchKeyword(content, k));
         });
         allArticles = allArticles.concat(filtered);
