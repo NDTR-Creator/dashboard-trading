@@ -109,6 +109,58 @@ function matchKeyword(content, keyword) {
   return content.includes(k);
 }
 
+// ============================================
+// TRADUCTION AUTO des titres (via Google Translate + cache localStorage)
+// ============================================
+
+const TRANSLATION_CACHE_KEY = 'news-translations-cache-v1';
+
+function getTranslationCache() {
+  try {
+    return JSON.parse(localStorage.getItem(TRANSLATION_CACHE_KEY) || '{}');
+  } catch (e) { return {}; }
+}
+
+function saveTranslationCache(cache) {
+  try {
+    const entries = Object.entries(cache);
+    // Limiter à 500 entrées, garder les plus récentes
+    const trimmed = entries.length > 500 ? Object.fromEntries(entries.slice(-500)) : cache;
+    localStorage.setItem(TRANSLATION_CACHE_KEY, JSON.stringify(trimmed));
+  } catch (e) {}
+}
+
+// Détection grossière : titre déjà en français ?
+function isLikelyFrench(text) {
+  const frenchHints = /\b(le|la|les|des|du|une|dans|avec|pour|sur|est|sont|cette|cet|son|sa|ses|notre|votre|leur|l'or|l'euro)\b/i;
+  return frenchHints.test(text);
+}
+
+// Traduit un titre EN → FR via Google Translate (via le Worker proxy)
+async function translateTitle(text) {
+  if (!text || text.length < 3) return text;
+  if (isLikelyFrench(text)) return text;
+
+  const cache = getTranslationCache();
+  if (cache[text]) return cache[text];
+
+  try {
+    const translateUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=${encodeURIComponent(text)}`;
+    const response = await fetch(RSS_PROXY + encodeURIComponent(translateUrl));
+    if (!response.ok) return text;
+
+    const data = await response.json();
+    const translated = data[0]?.map(seg => seg[0])?.join('').trim() || text;
+
+    cache[text] = translated;
+    saveTranslationCache(cache);
+    return translated;
+  } catch (err) {
+    console.warn('Erreur traduction:', err.message);
+    return text;
+  }
+}
+
 // Sources RSS - thematic affichées directement, general filtrées par mots-clés
 const NEWS_FEEDS = {
   gold: {
@@ -227,7 +279,19 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
       return;
     }
 
-    const html = topArticles.map(article => {
+    // Traduction des titres en parallèle (avec cache)
+    const translatedArticles = await Promise.all(topArticles.map(async article => {
+      const cleanOriginal = (article.title || '')
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'");
+      const translated = await translateTitle(cleanOriginal);
+      return { ...article, cleanTitle: translated, originalTitle: cleanOriginal };
+    }));
+
+    const html = translatedArticles.map(article => {
       const date = new Date(article.pubDate);
       const now = new Date();
       const diffMinutes = Math.floor((now - date) / 60000);
@@ -249,14 +313,6 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
         });
       }
 
-      // Nettoyage du titre
-      const cleanTitle = article.title
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/&#39;/g, "'");
-
       // Détection de la source depuis l'URL
       let source = 'News';
       try {
@@ -269,9 +325,10 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
         else source = host.split('.')[0].charAt(0).toUpperCase() + host.split('.')[0].slice(1);
       } catch (e) {}
 
+      // Titre original en attribut pour que l'utilisateur puisse hover et voir l'original
       return `
-        <a href="${article.link}" class="news-item" target="_blank" rel="noopener">
-          <div class="news-item-title">${cleanTitle}</div>
+        <a href="${article.link}" class="news-item" target="_blank" rel="noopener" title="Original: ${article.originalTitle.replace(/"/g, '&quot;')}">
+          <div class="news-item-title">${article.cleanTitle}</div>
           <div class="news-item-meta">
             <span class="news-item-source">${source}</span>
             <span class="news-item-date">${dateStr}</span>
