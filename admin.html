@@ -84,66 +84,60 @@
 
         <div class="form-group">
           <label for="daily-title">Titre du brief</label>
-          <input type="text" id="daily-title" name="title" placeholder="Ex: Brief J-1 FOMC, veille calme en apparence" required>
+          <input type="text" id="daily-title" name="title" placeholder="Ex: Brief post-FOMC, DXY sous pression" required>
+        </div>
+
+        <div class="form-section-divider">
+          <span class="section-divider-label">📊 Snapshot chiffré</span>
         </div>
 
         <div class="form-row">
           <div class="form-group">
             <label for="daily-gold">Prix Or (USD)</label>
-            <input type="text" id="daily-gold" name="gold_price" placeholder="4 185,63">
+            <input type="text" id="daily-gold" name="gold_price" placeholder="4 067,69">
           </div>
           <div class="form-group">
             <label for="daily-dxy">DXY</label>
-            <input type="text" id="daily-dxy" name="dxy" placeholder="102,407">
+            <input type="text" id="daily-dxy" name="dxy" placeholder="98,45">
           </div>
           <div class="form-group">
             <label for="daily-10y">10 ans US (%)</label>
-            <input type="text" id="daily-10y" name="us10y" placeholder="5,22">
+            <input type="text" id="daily-10y" name="us10y" placeholder="4,02">
           </div>
           <div class="form-group">
-            <label for="daily-fed-proba">Prob. Fed (%)</label>
-            <input type="text" id="daily-fed-proba" name="fed_proba" placeholder="17">
+            <label for="daily-fed-proba">Prob. Fed baisse (%)</label>
+            <input type="text" id="daily-fed-proba" name="fed_proba" placeholder="92">
           </div>
         </div>
 
-        <div class="form-group">
-          <label for="daily-snapshot">Snapshot chiffré · lecture synthétique</label>
-          <textarea id="daily-snapshot" name="snapshot" rows="4" placeholder="Synthèse générale de l'état du marché..."></textarea>
+        <div class="form-section-divider">
+          <span class="section-divider-label">1️⃣ Macro & Chiffres</span>
+          <span class="section-divider-hint">Fed · Guerre & Géopolitique · Dollar · Économie US</span>
         </div>
 
         <div class="form-group">
-          <label for="daily-fed">Volet Fed · décisions, membres, probabilités CME</label>
-          <textarea id="daily-fed" name="fed" rows="6" placeholder="État du débat FOMC, interventions des membres, probabilités de hausse/baisse..."></textarea>
+          <label for="daily-bloc1">Bloc 1 · Analyse Macro</label>
+          <textarea id="daily-bloc1" name="bloc1" rows="12" placeholder="Analyse Fed (décisions, discours, prob. CME)...&#10;&#10;Guerre & Géopolitique (Iran, Ukraine, Chine, pétrole)...&#10;&#10;Dollar (DXY, rendements US, flux)...&#10;&#10;Économie US (publications récentes, surprises)..."></textarea>
+        </div>
+
+        <div class="form-section-divider">
+          <span class="section-divider-label">2️⃣ Publications éco</span>
+          <span class="section-divider-hint">Passé · Présent · Futur · Impact sur l'or</span>
         </div>
 
         <div class="form-group">
-          <label for="daily-macro">Volet Macro · publications et flux institutionnels</label>
-          <textarea id="daily-macro" name="macro" rows="6" placeholder="Publications économiques du jour et à venir, flux CFTC, ETF, cibles institutions..."></textarea>
+          <label for="daily-bloc2">Bloc 2 · Publications économiques</label>
+          <textarea id="daily-bloc2" name="bloc2" rows="12" placeholder="📅 La semaine dernière : chiffres clés et impact réalisé sur l'or...&#10;&#10;⏰ Aujourd'hui : publications dans les prochaines heures, impact anticipé...&#10;&#10;🔮 Prochainement (48-72h) : catalyseurs majeurs à surveiller..."></textarea>
+        </div>
+
+        <div class="form-section-divider">
+          <span class="section-divider-label">3️⃣ Analyse technique XAU/USD</span>
+          <span class="section-divider-hint">Hier · Aujourd'hui · Demain</span>
         </div>
 
         <div class="form-group">
-          <label for="daily-geo">Volet Géopolitique · conflits, pétrole, tensions</label>
-          <textarea id="daily-geo" name="geopolitics" rows="5" placeholder="Iran-Hormuz, Ukraine, Taïwan, Chine, pétrole..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="daily-physical">Volet Demande physique · PBoC, Shanghai, ETF</label>
-          <textarea id="daily-physical" name="physical" rows="5" placeholder="Prime Shanghai, achats PBoC, importations Chine, flux ETF..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="daily-technical">Niveaux techniques observables · supply, demand, zones</label>
-          <textarea id="daily-technical" name="technical" rows="7" placeholder="Zones de supply au-dessus, demand en-dessous, pools de liquidité, FVG non mitigés, structure Weekly/Daily/H4..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="daily-scenarios">Scénarios probabilisés 48h</label>
-          <textarea id="daily-scenarios" name="scenarios" rows="6" placeholder="3 scénarios avec probabilités chiffrées et déclencheurs..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label for="daily-alerts">Alertes & règles opérationnelles</label>
-          <textarea id="daily-alerts" name="alerts" rows="4" placeholder="Catalyseurs programmés 48h, règles FLAT, fenêtres interdites..."></textarea>
+          <label for="daily-bloc3">Bloc 3 · Technique XAU/USD</label>
+          <textarea id="daily-bloc3" name="bloc3" rows="12" placeholder="📉 Hier : mouvement principal, niveaux défendus/cassés...&#10;&#10;📊 Aujourd'hui : lecture actuelle, supply/demand zones, flux dominant...&#10;&#10;🎯 Demain / 48h : scénarios possibles, niveaux de validation/invalidation..."></textarea>
         </div>
 
         <div class="form-actions">

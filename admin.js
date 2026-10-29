@@ -513,7 +513,7 @@ function renderHistory(briefs) {
           </div>
         </div>
         <div class="history-item-preview">
-          ${escapeHtml((brief.snapshot || brief.recap || '').substring(0, 150))}${(brief.snapshot || brief.recap || '').length > 150 ? '...' : ''}
+          ${escapeHtml((brief.bloc1 || brief.snapshot || brief.recap || '').substring(0, 150))}${(brief.bloc1 || brief.snapshot || brief.recap || '').length > 150 ? '...' : ''}
         </div>
       </div>
     `;

@@ -72,14 +72,11 @@ function renderDailyBrief(container, brief) {
 
       ${renderSnapshotTable(brief)}
 
-      ${brief.snapshot ? renderBriefSection('Snapshot · Lecture synthétique', brief.snapshot, '🎯') : ''}
-      ${brief.fed ? renderBriefSection('Volet Fed', brief.fed, '🏛️') : ''}
-      ${brief.macro ? renderBriefSection('Volet Macro', brief.macro, '📊') : ''}
-      ${brief.geopolitics ? renderBriefSection('Volet Géopolitique', brief.geopolitics, '🌍') : ''}
-      ${brief.physical ? renderBriefSection('Volet Demande physique', brief.physical, '🪙') : ''}
-      ${brief.technical ? renderBriefSection('Niveaux techniques observables', brief.technical, '📐') : ''}
-      ${brief.scenarios ? renderBriefSection('Scénarios probabilisés 48h', brief.scenarios, '🎲') : ''}
-      ${brief.alerts ? renderBriefSection('Alertes & règles opérationnelles', brief.alerts, '⚠️') : ''}
+      ${brief.bloc1 ? renderBriefSection('Macro & Chiffres', brief.bloc1, '1️⃣') : ''}
+      ${brief.bloc2 ? renderBriefSection('Publications éco · Passé · Présent · Futur', brief.bloc2, '2️⃣') : ''}
+      ${brief.bloc3 ? renderBriefSection('Analyse technique XAU/USD · Hier · Aujourd\'hui · Demain', brief.bloc3, '3️⃣') : ''}
+
+      ${renderLegacyBriefSections(brief)}
 
     </article>
   `;
@@ -221,6 +218,26 @@ function renderWeeklyBrief(container, brief, isCurrentWeek, monday, sunday) {
 // ============================================
 // UTILITAIRES
 // ============================================
+
+// Fonction de rétrocompatibilité pour les anciens briefs
+function renderLegacyBriefSections(brief) {
+  // Si le brief utilise déjà le nouveau format (bloc1/bloc2/bloc3), on n'affiche pas l'ancien
+  if (brief.bloc1 || brief.bloc2 || brief.bloc3) {
+    return '';
+  }
+
+  // Sinon on affiche l'ancien format pour les briefs publiés avant la refonte
+  let html = '';
+  if (brief.snapshot) html += renderBriefSection('Snapshot', brief.snapshot, '🎯');
+  if (brief.fed) html += renderBriefSection('Volet Fed', brief.fed, '🏛️');
+  if (brief.macro) html += renderBriefSection('Volet Macro', brief.macro, '📊');
+  if (brief.geopolitics) html += renderBriefSection('Volet Géopolitique', brief.geopolitics, '🌍');
+  if (brief.physical) html += renderBriefSection('Volet Demande physique', brief.physical, '🪙');
+  if (brief.technical) html += renderBriefSection('Niveaux techniques', brief.technical, '📐');
+  if (brief.scenarios) html += renderBriefSection('Scénarios probabilisés 48h', brief.scenarios, '🎲');
+  if (brief.alerts) html += renderBriefSection('Alertes', brief.alerts, '⚠️');
+  return html;
+}
 
 function renderBriefSection(title, content, icon) {
   return `
