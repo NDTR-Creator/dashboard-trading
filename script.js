@@ -161,14 +161,14 @@ async function translateTitle(text) {
   }
 }
 
-// Sources RSS - thematic affichées directement, general filtrées par mots-clés
+// Sources RSS testées fiables (Investing/Kitco bloquent via Cloudflare, exclus)
 const NEWS_FEEDS = {
   gold: {
     thematic: [
-      'https://www.investing.com/rss/commodities_Metals.rss',
-      'https://www.kitco.com/rss/kitconews.xml',
-      'https://www.kitco.com/rss/KitcoNews-ContributedCommentaries.xml',
-      'https://www.mining.com/feed/'
+      'https://www.mining.com/feed/',
+      'https://feeds.newsfilecorp.com/industry/precious-metals',
+      'https://feeds.newsfilecorp.com/industry/mining-metals',
+      'https://goldbroker.com/news.rss'
     ],
     general: [
       'https://www.fxstreet.com/rss/news',
@@ -177,12 +177,10 @@ const NEWS_FEEDS = {
   },
   dollar: {
     thematic: [
-      'https://www.investing.com/rss/forex_Majors.rss',
       'https://www.forexlive.com/feed'
     ],
     general: [
-      'https://www.fxstreet.com/rss/news',
-      'https://www.investing.com/rss/economicIndicators.rss'
+      'https://www.fxstreet.com/rss/news'
     ]
   }
 };
@@ -317,11 +315,13 @@ async function fetchFilteredNews(feeds, keywords, containerId) {
       let source = 'News';
       try {
         const host = new URL(article.link).hostname.replace('www.', '');
-        if (host.includes('investing')) source = 'Investing';
-        else if (host.includes('kitco')) source = 'Kitco';
-        else if (host.includes('fxstreet')) source = 'FXStreet';
+        if (host.includes('fxstreet')) source = 'FXStreet';
         else if (host.includes('forexlive')) source = 'ForexLive';
         else if (host.includes('mining')) source = 'Mining.com';
+        else if (host.includes('newsfilecorp')) source = 'NewsFile';
+        else if (host.includes('goldbroker')) source = 'GoldBroker';
+        else if (host.includes('investing')) source = 'Investing';
+        else if (host.includes('kitco')) source = 'Kitco';
         else source = host.split('.')[0].charAt(0).toUpperCase() + host.split('.')[0].slice(1);
       } catch (e) {}
 
