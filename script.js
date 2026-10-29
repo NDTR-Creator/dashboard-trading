@@ -90,20 +90,32 @@ function updateBriefDates() {
 // RÉCUPÉRATION DES ACTUALITÉS INVESTING RSS
 // ============================================
 
-// Mots-clés pour filtrage précis
-const GOLD_KEYWORDS = ['gold', 'or ', 'xau', 'bullion', 'métaux précieux', 'precious metals', 'lingot'];
-const DOLLAR_KEYWORDS = ['dollar', 'dxy', 'usd', 'greenback', 'billet vert', 'fed', 'fomc', 'powell', 'treasury', 'treasuries'];
+// Mots-clés pour filtrage (appliqués seulement aux flux généraux, pas aux thématiques)
+const GOLD_KEYWORDS = [
+  'gold', 'xau', 'bullion', 'ounce', 'oz',
+  'precious metals', 'metals', 'silver', 'platinum', 'palladium',
+  'mining', 'commodity', 'commodities',
+  'métaux précieux', 'lingot', 'cours de l\'or', 'l\'or'
+];
 
-// Flux RSS Investing.com
+const DOLLAR_KEYWORDS = [
+  'dollar', 'dxy', 'usd', 'greenback', 'billet vert',
+  'fed', 'fomc', 'powell', 'warsh', 'yellen', 'federal reserve',
+  'treasury', 'treasuries', 'yield', 'yields', 'bond', 'bonds',
+  'rate', 'rates', 'hike', 'cut', 'basis points',
+  'cpi', 'pce', 'inflation', 'nfp', 'payrolls', 'jobs'
+];
+
+// Flux RSS Investing.com (séparés : thématiques affichés tels quels, généraux filtrés)
 const INVESTING_FEEDS = {
-  gold: [
-    'https://www.investing.com/rss/commodities_Metals.rss',
-    'https://www.investing.com/rss/news_11.rss'
-  ],
-  dollar: [
-    'https://www.investing.com/rss/forex_Majors.rss',
-    'https://www.investing.com/rss/news_14.rss'
-  ]
+  gold: {
+    thematic: ['https://www.investing.com/rss/commodities_Metals.rss'],
+    general: ['https://www.investing.com/rss/news_11.rss']
+  },
+  dollar: {
+    thematic: ['https://www.investing.com/rss/forex_Majors.rss'],
+    general: ['https://www.investing.com/rss/news_14.rss']
+  }
 };
 
 // Proxies CORS avec fallback automatique (si un tombe, on passe au suivant)
@@ -157,40 +169,53 @@ function parseRssXml(xmlText) {
   }));
 }
 
-// Fonction de récupération et filtrage des articles
-async function fetchFilteredNews(feedUrls, keywords, containerId) {
+// Fonction de récupération des articles
+// - Flux "thematic" : affichés directement (déjà filtrés par Investing)
+// - Flux "general" : filtrés par mots-clés
+async function fetchFilteredNews(feeds, keywords, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
 
   container.innerHTML = '<div class="news-loading">Chargement des articles Investing en cours...</div>';
 
   try {
-    let allArticles = [];
+    let thematicArticles = [];
+    let generalArticles = [];
 
-    for (const feedUrl of feedUrls) {
+    // Flux thématiques : prendre tous les articles
+    for (const feedUrl of feeds.thematic || []) {
       try {
         const xmlText = await fetchViaProxy(feedUrl);
         const parsedItems = parseRssXml(xmlText);
-        if (parsedItems.length > 0) {
-          allArticles = allArticles.concat(parsedItems);
-        }
+        thematicArticles = thematicArticles.concat(parsedItems);
       } catch (feedError) {
-        console.warn('Erreur sur le flux ' + feedUrl, feedError);
+        console.warn('Erreur sur le flux thématique ' + feedUrl, feedError);
       }
     }
 
+    // Flux généraux : filtrer par mots-clés
+    for (const feedUrl of feeds.general || []) {
+      try {
+        const xmlText = await fetchViaProxy(feedUrl);
+        const parsedItems = parseRssXml(xmlText);
+        const filtered = parsedItems.filter(article => {
+          const content = (article.title + ' ' + (article.description || '')).toLowerCase();
+          return keywords.some(keyword => content.includes(keyword.toLowerCase()));
+        });
+        generalArticles = generalArticles.concat(filtered);
+      } catch (feedError) {
+        console.warn('Erreur sur le flux général ' + feedUrl, feedError);
+      }
+    }
+
+    const allArticles = thematicArticles.concat(generalArticles);
+
     // Déduplication par titre
     const seenTitles = new Set();
-    const uniqueArticles = allArticles.filter(article => {
-      if (seenTitles.has(article.title)) return false;
+    const filteredArticles = allArticles.filter(article => {
+      if (!article.title || seenTitles.has(article.title)) return false;
       seenTitles.add(article.title);
       return true;
-    });
-
-    // Filtrage par mots-clés
-    const filteredArticles = uniqueArticles.filter(article => {
-      const content = (article.title + ' ' + (article.description || '')).toLowerCase();
-      return keywords.some(keyword => content.includes(keyword.toLowerCase()));
     });
 
     // Tri par date descendante
